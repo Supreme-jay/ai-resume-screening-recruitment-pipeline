@@ -1,0 +1,735 @@
+{
+  "name": "Ai Resume Screening & Recruitment agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "apply",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1808,
+        64
+      ],
+      "id": "974f11e6-b79b-422a-9307-905571798f10",
+      "name": "Webhook",
+      "webhookId": "68b35e28-c99c-4e5e-803f-2d721299aef3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  model: \"llama-3.3-70b-versatile\",\n  temperature: 0.1,\n  max_tokens: 900,\n  messages: [\n    {\n      role: \"system\",\n      content: \"You are a senior technical recruiter with 15 years of experience. Evaluate the candidate CV against the job description provided. Be contextual — understand transferable skills and career progression, not just keyword matches. Return ONLY valid JSON, no text outside it:\\n{\\n  \\\"score\\\": 0,\\n  \\\"classification\\\": \\\"SHORTLISTED or KEEP_IN_VIEW or REJECTED\\\",\\n  \\\"strength_areas\\\": \\\"2-3 specific strengths from their CV relevant to this role\\\",\\n  \\\"gap_areas\\\": \\\"1-2 gaps or concerns if any\\\",\\n  \\\"ai_rationale\\\": \\\"2-3 sentences explaining the classification decision\\\",\\n  \\\"interview_invite_email\\\": \\\"professional interview invitation email under 100 words, warm tone, mention their specific relevant experience, include placeholder [CALENDLY_LINK]\\\",\\n  \\\"rejection_email\\\": \\\"professional, kind rejection email under 80 words, mention 1 genuine strength, encourage future applications\\\"\\n}\\n\\nScoring guide:\\nSHORTLISTED: score >= 70, clear role fit, relevant experience\\nKEEP_IN_VIEW: score 45-69, some relevant skills but gaps exist\\nREJECTED: score < 45, significant mismatch with role requirements\"\n    },\n    {\n      role: \"user\",\n      content:\n        \"JOB DESCRIPTION:\\nRole: \" + $json.RoleApplied +\n        \"\\nWe are looking for an AI Automation Engineer with experience in n8n, workflow automation, API integrations, JavaScript, and AI tool integrations (Groq, OpenAI). Must have demonstrated ability to build production-grade automation systems. Experience with CRM tools and data pipelines is a plus.\" +\n        \"\\n\\nCANDIDATE CV:\\nName: \" + $json.Name +\n        \"\\nRole Applying For: \" + $json.RoleApplied +\n        \"\\nCV: \" + $json.cv_text +\n        \"\\nLinkedIn: \" + ($json.LinkedIn || \"not provided\")\n    }\n  ]\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -864,
+        -176
+      ],
+      "id": "08663f38-579e-43eb-b07f-02d8cd60aea7",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "0DcW89UBjD4xU1q2",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $input.first().json;\nconst rawText = aiResponse.choices[0].message.content;\n\nlet parsed;\ntry {\n  parsed = JSON.parse(rawText);\n} catch (e) {\n  const match = rawText.match(/\\{[\\s\\S]*\\}/);\n  if (!match) throw new Error('No JSON in Groq response: ' + rawText);\n  parsed = JSON.parse(match[0]);\n}\n\nconst applicant = $('Prepare Applicant Data').first().json;\n\nconst calLink = 'https://calendly.com/yourname/screening';\nconst inviteEmail = (parsed.interview_invite_email || '').replace('[CALENDLY_LINK]', calLink);\n\nconst cleanClassification = String(parsed.classification || 'REJECTED').trim().toUpperCase();\n\nreturn [{\n  json: {\n    CandidateID: 'CAND-' + Date.now(),\n    Name: applicant.Name || '',\n    Email: applicant.Email || '',\n    RoleApplied: applicant.RoleApplied || '',\n    Score: parsed.score || 0,\n    Classification: cleanClassification,\n    StrengthAreas: parsed.strength_areas || 'N/A',\n    GapAreas: parsed.gap_areas || 'N/A',\n    AIRationale: parsed.ai_rationale || '',\n    InviteEmail: inviteEmail || '',\n    RejectionEmail: parsed.rejection_email || '',\n    InterviewLink: calLink,\n    ActionTaken: 'Email pending',\n    AppliedAt: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -688,
+        0
+      ],
+      "id": "9e92ef09-99f4-4917-9194-8dbf993301d1",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1jxTO_GdEuFwdyYyvPUs79Oh3p-D64Reyc5BSdLgz9zQ",
+          "mode": "list",
+          "cachedResultName": "Candidate Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jxTO_GdEuFwdyYyvPUs79Oh3p-D64Reyc5BSdLgz9zQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jxTO_GdEuFwdyYyvPUs79Oh3p-D64Reyc5BSdLgz9zQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "CandidateID    ": "={{ $json.CandidateID }}",
+            "Name          ": "={{ $('Webhook').item.json.body.name }}",
+            "Email         ": "={{ $('Webhook').item.json.body.email }}",
+            "RoleApplied   ": "={{ $('Webhook').item.json.body.role }}",
+            "Score          ": "={{ $json.Score }}",
+            "Classification ": "={{ $json.Classification }}",
+            "StrengthAreas  ": "={{ $json.StrengthAreas }}",
+            "GapAreas": "={{ $json.GapAreas }}",
+            "AIRationale   ": "={{ $json.AIRationale }}",
+            "ActionTaken    ": "={{ $json.ActionTaken }}",
+            "AppliedAt     ": "={{ $json.AppliedAt }}",
+            "InterviewLink": "={{ $json.InterviewLink }}"
+          },
+          "matchingColumns": [
+            "CandidateID    "
+          ],
+          "schema": [
+            {
+              "id": "CandidateID    ",
+              "displayName": "CandidateID    ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Name          ",
+              "displayName": "Name          ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email         ",
+              "displayName": "Email         ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "RoleApplied   ",
+              "displayName": "RoleApplied   ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score          ",
+              "displayName": "Score          ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Classification ",
+              "displayName": "Classification ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "StrengthAreas  ",
+              "displayName": "StrengthAreas  ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "GapAreas",
+              "displayName": "GapAreas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AIRationale   ",
+              "displayName": "AIRationale   ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ActionTaken    ",
+              "displayName": "ActionTaken    ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AppliedAt     ",
+              "displayName": "AppliedAt     ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "InterviewLink",
+              "displayName": "InterviewLink",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -496,
+        -160
+      ],
+      "id": "4e78d428-1221-4e46-9409-d5f50aacd548",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "vjI5a3n83bDQYOqe",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "44f4f93d-0982-4a73-a2b2-03102ce6445b",
+              "leftValue": "={{ $json['Classification '] }}",
+              "rightValue": "SHORTLISTED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -320,
+        0
+      ],
+      "id": "4d6d578c-4d2c-4ffb-8b05-487fc53edab6",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json['Email         '] }}",
+        "subject": "=Interview Invitation — {{ $json['RoleApplied   '] }} at [ACEE ITC]",
+        "emailType": "text",
+        "message": "={{ $('Code in JavaScript').item.json.invite_email }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -144,
+        -176
+      ],
+      "id": "8257bd09-7039-4048-9a50-6f9b9e96c3e0",
+      "name": "Send a message",
+      "webhookId": "75a69e0d-1d9b-446f-946d-babde1ab3849",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mGRlfUTH4l1NC5jY",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "recruitment-pipeline",
+          "mode": "name"
+        },
+        "text": "=SHORTLISTED CANDIDATE  Name: {{ $('If').item.json['Name          '] }} Role: {{ $('If').item.json['RoleApplied   '] }} AI Score: {{ $('If').item.json['Score          '] }}/100  Strengths: {{ $('If').item.json['StrengthAreas  '] }} Gaps: {{ $('If').item.json.GapAreas }} Why shortlisted: {{ $('If').item.json['AIRationale   '] }}  Interview invitation sent. Calendly link included. Candidate ID: {{ $('If').item.json['CandidateID    '] }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        64,
+        -176
+      ],
+      "id": "34d97d7d-451a-40f4-a490-49701cfd9c5b",
+      "name": "Send a message1",
+      "webhookId": "4f37056e-c1cf-44e2-a582-9f538e856e74",
+      "credentials": {
+        "slackApi": {
+          "id": "jBMr2NTt68t5utLO",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ad0a7441-0bcc-4822-9baa-16b24283c9ce",
+              "leftValue": "={{ $json['Classification '] }}",
+              "rightValue": "KEEP_IN_VIEW",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -144,
+        112
+      ],
+      "id": "573a623f-22cc-49cc-8285-9d6fec51f68a",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json['Email         '] }}",
+        "subject": "=Your application for {{ $json['RoleApplied   '] }} — Update",
+        "emailType": "text",
+        "message": "=Hi ,{{ $('If').item.json['Name          '] }}  Thank you for applying for the {{ $json['RoleApplied   '] }} position.  We've reviewed your application and wanted to let you know that we're still in the process of evaluating candidates.  Your application has been noted and we'll be in touch with an update within the next 5–7 business days.  Thank you for your patience.  Best regards, Recruitment Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        16
+      ],
+      "id": "246ddf03-3182-4c3a-ab69-8b2fa00b2549",
+      "name": "Send a message2",
+      "webhookId": "c833fcc5-c6e3-4721-8b84-df99e391fccf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mGRlfUTH4l1NC5jY",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json['Email         '] }}",
+        "subject": "=Your application for {{ $json['RoleApplied   '] }}",
+        "message": "={{ $('Code in JavaScript').item.json.rejection_email }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        64,
+        224
+      ],
+      "id": "4a65eff0-3bcb-4f32-a822-93ff6d3753bf",
+      "name": "Send a message3",
+      "webhookId": "e344feff-6103-42f5-9430-34f2682424a9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mGRlfUTH4l1NC5jY",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"received\",\n  \"message\": \"Application submitted successfully\",\n  \"candidate_id\": \"{{$json.CandidateID || ''}}\",\n  \"classification\": \"{{$json.Classification || ''}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        336,
+        16
+      ],
+      "id": "ed1f8b61-c1e8-4cf6-861b-91328e795c79",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"received\",\n  \"message\": \"Application submitted and interview invitation sent successfully\",\n  \"candidate_id\": \"{{$json.CandidateID || ''}}\",\n  \"classification\": \"{{$json.Classification || ''}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        272,
+        -176
+      ],
+      "id": "af5b729f-3285-4234-9a1e-75b78d810ad0",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"received\",\n  \"message\": \"Application submitted successfully\",\n  \"candidate_id\": \"{{$json.CandidateID || ''}}\",\n  \"classification\": \"{{$json.Classification || ''}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        288,
+        224
+      ],
+      "id": "5824b0bc-ae51-47cc-bd30-73f8df69f938",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "428eede5-9e94-4f7f-98bf-597b0af82183",
+              "leftValue": "={{$binary.cv_file.fileName}}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1552,
+        176
+      ],
+      "id": "77d919eb-5930-4fb3-92ec-c3d916c1f04d",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "cv_file",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -1248,
+        -160
+      ],
+      "id": "f3a6989e-a38b-48e1-823e-94a12c12a85b",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f526a97b-9156-4e0c-8000-618c846d5b45",
+              "name": "Name",
+              "value": "={{$('Webhook').item.json.body.name}}",
+              "type": "string"
+            },
+            {
+              "id": "b8957cec-84cc-451a-a024-883857fc261d",
+              "name": "Email",
+              "value": "={{$('Webhook').item.json.body.email}}",
+              "type": "string"
+            },
+            {
+              "id": "6e40c028-b0b6-4dba-b938-1ce596fd7268",
+              "name": "RoleApplied",
+              "value": "={{$('Webhook').item.json.body.role}}",
+              "type": "string"
+            },
+            {
+              "id": "c8a74af5-80fe-4503-bf3c-358d9a7da2b0",
+              "name": "Linkedln",
+              "value": "={{$('Webhook').item.json.body.linkedin}}",
+              "type": "string"
+            },
+            {
+              "id": "dd934613-5575-4856-a70d-4e658d7ad34e",
+              "name": "cv_text",
+              "value": "={{$json.text}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1072,
+        16
+      ],
+      "id": "f6b1fedc-4676-4e31-8c36-a702b7240f9d",
+      "name": "Prepare Applicant Data"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"failed\",\n  \"message\": \"Please upload your CV as a PDF file before submitting.\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -1248,
+        432
+      ],
+      "id": "2848ddf5-8bf2-41aa-a529-933f3135f544",
+      "name": "Respond to Webhook3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Prepare Applicant Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Applicant Data": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "6f1fa52f-8a1d-4382-b6b8-8b90bcae5f33",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d361637f1d70339ec01cb1a27fd403eac27fb61b561b025cd2a653356b47936c"
+  },
+  "id": "dpvJd9qpRr8xAc7AfORIZ",
+  "tags": []
+}
