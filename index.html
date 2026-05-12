@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ACEE ICT Careers</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --bg-2: #0d1b31;
+      --panel: rgba(255,255,255,0.08);
+      --text: #eef4ff;
+      --muted: #b6c3da;
+      --accent: #3b82f6;
+      --accent-2: #06b6d4;
+      --success: #22c55e;
+      --danger: #ff6b6b;
+      --border: rgba(255,255,255,0.14);
+      --shadow: 0 24px 70px rgba(0,0,0,0.34);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.22), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(6,182,212,0.18), transparent 28%),
+        linear-gradient(135deg, var(--bg) 0%, var(--bg-2) 55%, #091426 100%);
+      min-height: 100vh;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 28px 18px 48px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 0 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .brand-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 10px 25px rgba(59,130,246,0.32);
+      font-size: 18px;
+      font-weight: 900;
+      color: white;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+
+    .brand-text small {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .badge {
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .hero-panel,
+    .form-card {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel {
+      padding: 38px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 760px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      right: -90px;
+      bottom: -90px;
+      background: radial-gradient(circle, rgba(6,182,212,0.22), transparent 70%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      border-radius: 999px;
+      padding: 9px 14px;
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-panel h1 {
+      font-size: clamp(34px, 4.5vw, 56px);
+      line-height: 1.02;
+      margin: 18px 0 16px;
+      max-width: 12ch;
+    }
+
+    .hero-panel p {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.75;
+      max-width: 62ch;
+      margin: 0;
+    }
+
+    .highlights {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 30px;
+    }
+
+    .highlight {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .highlight h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .highlight p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+
+    .values {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .value {
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      padding: 16px;
+    }
+
+    .value strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    .value span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .form-card {
+      padding: 28px;
+    }
+
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .form-header h2 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    .form-header p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 46ch;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 10px 14px;
+      background: rgba(34,197,94,0.12);
+      color: #b9ffd2;
+      border: 1px solid rgba(34,197,94,0.22);
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    form {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 14px;
+      color: #e5ebff;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(8,12,28,0.66);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    input::placeholder {
+      color: #8f9cc2;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(59,130,246,0.92);
+      box-shadow: 0 0 0 4px rgba(59,130,246,0.16);
+    }
+
+    .upload-box {
+      border: 1.5px dashed rgba(255,255,255,0.22);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.03);
+      padding: 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .upload-box input[type="file"] {
+      padding: 12px;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .upload-box .meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .benefits {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .benefit {
+      border-radius: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 14px 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .privacy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 40ch;
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 15px 24px;
+      min-width: 210px;
+      cursor: pointer;
+      box-shadow: 0 16px 32px rgba(59,130,246,0.3);
+      transition: transform .15s ease, opacity .2s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: .72; cursor: not-allowed; transform: none; }
+
+    .response {
+      display: none;
+      margin-top: 18px;
+      border-radius: 18px;
+      padding: 16px 18px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .response.success {
+      display: block;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.22);
+      color: #baf7cc;
+    }
+
+    .response.error {
+      display: block;
+      background: rgba(255,107,107,0.12);
+      border: 1px solid rgba(255,107,107,0.22);
+      color: #ffd3d3;
+    }
+
+    .footnote {
+      margin-top: 14px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 8, 20, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 460px;
+      background: #0d172b;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+
+    .modal-icon {
+      width: 68px;
+      height: 68px;
+      border-radius: 999px;
+      margin: 0 auto 16px;
+      display: grid;
+      place-items: center;
+      background: rgba(34,197,94,0.14);
+      color: #baf7cc;
+      font-size: 30px;
+      border: 1px solid rgba(34,197,94,0.26);
+    }
+
+    .modal h3 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+
+    .modal p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .modal .modal-actions {
+      margin-top: 22px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .modal .modal-actions button {
+      min-width: 150px;
+    }
+
+    @media (max-width: 1020px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-panel { min-height: auto; }
+    }
+
+    @media (max-width: 680px) {
+      .grid,
+      .highlights,
+      .values,
+      .benefits { grid-template-columns: 1fr; }
+      .form-header { flex-direction: column; }
+      .hero-panel,
+      .form-card { padding: 22px; }
+      button { width: 100%; }
+      .actions { align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-badge">A</div>
+        <div class="brand-text">
+          <span>ACEE ICT</span>
+          <small>Careers & Talent Acquisition</small>
+        </div>
+      </div>
+      <div class="badge">Now Hiring: AI Automation Engineer</div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-panel">
+        <div>
+          <div class="eyebrow">Join a team building modern automation systems</div>
+          <h1>Careers at ACEE ICT</h1>
+          <p>
+            We are looking for smart, practical builders who can turn business processes into reliable automation systems.
+            If you enjoy workflow design, integrations, AI tools, and real problem-solving, this could be your next move.
+          </p>
+
+          <div class="highlights">
+            <div class="highlight">
+              <h3>Meaningful Work</h3>
+              <p>Build real automation systems for business operations, customer workflows, recruitment, and analytics.</p>
+            </div>
+            <div class="highlight">
+              <h3>Modern Stack</h3>
+              <p>Work with n8n, APIs, AI integrations, dashboards, structured workflows, and production-ready automations.</p>
+            </div>
+            <div class="highlight">
+              <h3>Growth Focused</h3>
+              <p>We value ownership, learning, and people who can think beyond simple task execution.</p>
+            </div>
+            <div class="highlight">
+              <h3>Fast-Moving Team</h3>
+              <p>Collaborate in a team culture that rewards clarity, execution, speed, and strong communication.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="values">
+          <div class="value">
+            <strong>Remote-Friendly</strong>
+            <span>Work in a flexible environment focused on output and contribution.</span>
+          </div>
+          <div class="value">
+            <strong>Real Projects</strong>
+            <span>Contribute to systems that solve actual operational and revenue problems.</span>
+          </div>
+          <div class="value">
+            <strong>Career Growth</strong>
+            <span>Learn by building, shipping, and improving systems in production workflows.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <div class="form-header">
+          <div>
+            <h2>Application Form</h2>
+            <p>Complete the form below and upload your CV. Your application will be reviewed through our internal hiring workflow.</p>
+          </div>
+          <div class="tag">ACEE ICT Recruitment</div>
+        </div>
+
+        <form id="applicationForm" action="https://supremeace.dpdns.org/webhook/apply" method="POST" enctype="multipart/form-data" novalidate>
+          <div class="grid">
+            <div class="field">
+              <label for="name">Full Name</label>
+              <input id="name" name="name" placeholder="Enter your full name" required />
+            </div>
+            <div class="field">
+              <label for="email">Email Address</label>
+              <input id="email" name="email" type="email" placeholder="Enter your email address" required />
+            </div>
+            <div class="field">
+              <label for="role">Role Applying For</label>
+              <input id="role" name="role" value="AI Automation Engineer" required />
+            </div>
+            <div class="field">
+              <label for="linkedin">LinkedIn Profile</label>
+              <input id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/your-profile" />
+            </div>
+          </div>
+
+          <div class="field full">
+            <label for="cv_file">Upload CV / Resume</label>
+            <div class="upload-box">
+              <input id="cv_file" name="cv_file" type="file" accept=".pdf" required />
+              <div class="meta">Accepted formats: PDF only Please upload a clear and updated CV that reflects your most relevant experience.</div>
+            </div>
+          </div>
+
+          <div class="benefits">
+            <div class="benefit">Role focus: workflow automation, API integrations, AI tools, JavaScript, and production-grade systems.</div>
+            <div class="benefit">Strong applications clearly demonstrate practical projects, business thinking, and hands-on build experience.</div>
+          </div>
+
+          <div class="actions">
+            <div class="privacy">
+              By submitting this form, you consent to your application data being processed for hiring and interview coordination.
+            </div>
+            <button type="submit" id="submitBtn">Submit Application</button>
+          </div>
+        </form>
+
+        <div id="responseBox" class="response"></div>
+        <div class="footnote">This form is connected to the ACEE ICT hiring workflow.</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="successModal" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-icon">✓</div>
+      <h3>Submitted Successfully</h3>
+      <p id="modalMessage">Your application has been received successfully.</p>
+      <div class="modal-actions">
+        <button type="button" id="closeModalBtn">Okay</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('applicationForm');
+    const responseBox = document.getElementById('responseBox');
+    const submitBtn = document.getElementById('submitBtn');
+    const successModal = document.getElementById('successModal');
+    const modalMessage = document.getElementById('modalMessage');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    function showSuccessModal(message) {
+      modalMessage.textContent = message;
+      successModal.classList.add('show');
+      successModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeSuccessModal() {
+      successModal.classList.remove('show');
+      successModal.setAttribute('aria-hidden', 'true');
+    }
+
+    closeModalBtn.addEventListener('click', closeSuccessModal);
+    successModal.addEventListener('click', (event) => {
+      if (event.target === successModal) closeSuccessModal();
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      responseBox.className = 'response';
+      responseBox.textContent = '';
+
+      if (!form.checkValidity()) {
+        responseBox.className = 'response error';
+        responseBox.textContent = 'Please complete all required fields before submitting.';
+        form.reportValidity();
+        return;
+      }
+
+      const cvFile = document.getElementById('cv_file').files[0];
+      if (!cvFile) {
+        responseBox.className = 'response error';
+        responseBox.textContent = 'Please upload your CV before submitting your application.';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        const rawText = await response.text();
+        let data = {};
+
+        try {
+          data = rawText ? JSON.parse(rawText) : {};
+        } catch {
+          data = { message: rawText || 'Application submitted successfully.' };
+        }
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Something went wrong while submitting your application.');
+        }
+
+        const candidateId = data.candidate_id ? ` Candidate ID: ${data.candidate_id}.` : '';
+        const classification = data.classification ? ` Initial classification: ${data.classification}.` : '';
+        const successMessage = data.message || `Application submitted successfully.${candidateId}${classification}`;
+
+        responseBox.className = 'response success';
+        responseBox.textContent = successMessage;
+        form.reset();
+        showSuccessModal(successMessage);
+      } catch (error) {
+        responseBox.className = 'response error';
+        responseBox.textContent = error.message || 'Submission failed. Please try again.';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
+      }
+    });
+  </script>
+</body>
+</html>
